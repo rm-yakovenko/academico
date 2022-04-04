@@ -254,7 +254,7 @@ class CourseTest extends TestCase
         $courseTimeParsed = $course->course_times;
 
         $this->assertSame(
-            'Mon - Wed 10:00 AM - 11:00 AM | Fri - Sat 10:00 AM - 11:00 AM | Thu 10:15 AM - 11:00 AM',
+            'Mon, Tue, Wed, Fri, Sat 10:00 AM - 11:00 AM | Thu 10:15 AM - 11:00 AM',
             $courseTimeParsed
         );
     }

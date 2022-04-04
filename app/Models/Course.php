@@ -308,40 +308,12 @@ class Course extends Model
         }
 
         $courseTimes = $courseTimes->sortBy('day');
-        foreach ($courseTimes->groupBy('timeString') as $groupedCourseTimes) {
-            $currentSeq = [];
-            foreach ($groupedCourseTimes as $courseTime) {
-                $prevCourseTime = end($currentSeq);
-                if ($prevCourseTime && ($courseTime->day - $prevCourseTime->day) !== 1) {
-                    $currentSeq = [];
-                }
-                $currentSeq[] = $courseTime;
-                $courseTime->firstOfSeq = reset($currentSeq);
-            }
-        }
-
-        $groups = $courseTimes->groupBy(fn (CourseTime $courseTime) => $courseTime->firstOfSeq->id)
-            ->groupBy(fn (Collection $seqGroup) => $seqGroup->count() > 1 ? 'multi_days' : 'multi_times');
-
-        $result = [];
-
-        // Instead of showing this:
-        // Mon 9:00 - 5:00 | Tue 9:00 - 5:00 | Wed 9:00 - 5:00 | Thu 9:00 - 5:00 | Fri 9:00 - 5:00
-        // we could show:
-        // Mon - Fri 9:00 - 5:00
-        foreach (collect($groups->get('multi_days', [])) as $group) {
-            $firstDay = $group->first();
-            $lastDay = $group->last();
-            $result[] = "{$firstDay->dayString} - {$lastDay->dayString} {$firstDay->timeString}";
-        }
-
-        // Mon 10:00 AM - 11:00 AM / 11:30 AM - 12:45 PM
-        foreach (collect($groups->get('multi_times', []))->flatten()->groupBy('day') as $group) {
-            $firstDay = $group->first();
-            $result[] = "{$firstDay->dayString} {$group->pluck('timeString')->join(' / ')}";
-        }
-
-        return implode(' | ', $result);
+        $result = $courseTimes->groupBy('timeString')
+            ->map(function (Collection $group) {
+                $timeString = $group->first()->timeString;
+                return "{$group->pluck('dayString')->join(', ')} {$timeString}";
+            });
+        return $result->join(' | ');
     }
 
     public function getCoursePeriodNameAttribute()
